@@ -1,26 +1,94 @@
-import React, {useState} from "react";
-
-//*    if (!value) return >> Verifica que no haya texto vacio
-
+import React, {useState, useEffect} from "react";
 
 const Home = () => {
   const [tasks, setTasks] = useState([]);
   const [text, setText] = useState("");
   const [hoveredTaskId, setHoveredTaskId] = useState(null);
+  const API_URL = "https://playground.4geeks.com/todo";   		{/*4Geeks API URL */}
+  const USERNAME = "jabon05";                                 {/*My User */}
 
-  const addTask = (value) => {
+
+[{/*Creacion de nuevo usuario */}]
+  const createNewUser = async () => {
+  try {
+    const response = await fetch(`${API_URL}/users/${USERNAME}`, { method: "POST" });
+    if (!response.ok) console.log("Este usuario ya existe");
+  } catch (error) {
+    console.error("Error creando el usuario, codigo:", error);
+  };
+  };
+
+[{/*Llamar todas las tareas del usuario */}]
+  const getAllTasks = async () => {
+  try {
+    const response = await fetch(`${API_URL}/users/${USERNAME}`);  {/*AQUI SE ESPECIFICA EL DIRECTORIO Y SE IDENTIFICA SI ES UNA ACCION DEL TODO O EL USUARIO (/users/ {o} /todos/)*/}
+    if (response.ok) {
+      const data = await response.json();
+      setTasks(data.todos || []);
+    } else {
+      console.error("Fallo al buscar las tareas, codigo:", response.status);
+    }
+  } catch (error) {
+    console.error("Error buscando las tareas, codigo:", error);
+  }
+  };
+
+[{/*Agregar una nueva tarea */}]
+  const addTask = async (value) => {
     if (!value) return;
     const newTask = {
-      id: Date.now().toString(),
-      text: value,
+      label: value, 
+      is_done: false
     };
-    setTasks([newTask, ...tasks]);
-    setText("");
+    try {
+      const response = await fetch(`${API_URL}/todos/${USERNAME}`, {
+        method: "POST",
+        body: JSON.stringify(newTask),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.ok) {
+        await getAllTasks();
+        setText("");
+      } else {
+      console.error("Error agregando una nueva tarea:", response.status);
+      }
+    } catch (error) {
+      console.error("Error agregando una nueva tarea:", error);
+    }
   };
 
-  const deleteTask = (id) => {
-    setTasks(tasks.filter((task) => task.id !== id));
+[{/*Eliminar una tarea */}]
+  const deleteTask = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/todos/${id}`, { method: "DELETE" });
+      if (response.ok) {
+        await getAllTasks();
+      }
+    } catch (error) {
+      console.error("Error borrando la tarea:", error);
+    }
   };
+
+[{/*Eliminar todas las tareas */}]
+  const clearAllTasks = async () => {
+    try {
+      const response = await fetch(`${API_URL}/users/${USERNAME}`, { method: "DELETE" });
+      if (response.ok) {
+        await createNewUser();
+        await getAllTasks();
+      }
+    } catch (error) {
+      console.error("Error eliminando todas las tareas:", error);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      await createNewUser();
+      await getAllTasks();
+    };
+    init();
+  }, []);
 
   return (
     <div className="container py-5 ">
@@ -54,7 +122,7 @@ const Home = () => {
 				onMouseEnter={() => setHoveredTaskId(task.id)}
                 onMouseLeave={() => setHoveredTaskId(null)}
               >
-               <span className="task-text"> {task.text} </span>
+               <span className="task-text"> {task.label} </span>
 				
 			{/* boton para borrar las tareas */}
                 <button
@@ -71,10 +139,13 @@ const Home = () => {
           </ul>
 
           <p className="text-muted">Tareas pendientes: {tasks.length}</p>
+          {/* Boton para borrar todo */}
+          <button onClick={clearAllTasks} className="btn btn-danger w-100">
+            Borrar todas las tareas
+          </button>
         </div>
       </div>
     </div>
   );
 };
-
 export default Home;
