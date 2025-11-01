@@ -8,7 +8,7 @@ const Home = () => {
   const USERNAME = "jabon05";                                 {/*My User */}
 
 
-[{/*Creacion de nuevo usuario */}]
+{/*Creacion de nuevo usuario */}
   const createNewUser = async () => {
   try {
     const response = await fetch(`${API_URL}/users/${USERNAME}`, { method: "POST" });
@@ -18,13 +18,16 @@ const Home = () => {
   };
   };
 
-[{/*Llamar todas las tareas del usuario */}]
+{/*Llamar todas las tareas del usuario */}
   const getAllTasks = async () => {
   try {
     const response = await fetch(`${API_URL}/users/${USERNAME}`);  {/*AQUI SE ESPECIFICA EL DIRECTORIO Y SE IDENTIFICA SI ES UNA ACCION DEL TODO O EL USUARIO (/users/ {o} /todos/)*/}
     if (response.ok) {
       const data = await response.json();
       setTasks(data.todos || []);
+    } else if (response.status === 404) {           {/* Solo crea el usuario si el GET devuelve 404 porque el usuario no existe */}
+      console.warn("Usuario no existe, creando un nuevo usuario.");
+      await createNewUser(); 
     } else {
       console.error("Fallo al buscar las tareas, codigo:", response.status);
     }
@@ -33,7 +36,7 @@ const Home = () => {
   }
   };
 
-[{/*Agregar una nueva tarea */}]
+{/*Agregar una nueva tarea */}
   const addTask = async (value) => {
     if (!value) return;
     const newTask = {
@@ -57,7 +60,7 @@ const Home = () => {
     }
   };
 
-[{/*Eliminar una tarea */}]
+{/*Eliminar una tarea */}
   const deleteTask = async (id) => {
     try {
       const response = await fetch(`${API_URL}/todos/${id}`, { method: "DELETE" });
@@ -69,7 +72,7 @@ const Home = () => {
     }
   };
 
-[{/*Eliminar todas las tareas */}]
+{/*Eliminar todas las tareas */}
   const clearAllTasks = async () => {
     try {
       const response = await fetch(`${API_URL}/users/${USERNAME}`, { method: "DELETE" });
@@ -83,11 +86,7 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const init = async () => {
-      await createNewUser();
-      await getAllTasks();
-    };
-    init();
+      getAllTasks();
   }, []);
 
   return (
